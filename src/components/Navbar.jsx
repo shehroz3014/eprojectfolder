@@ -90,7 +90,7 @@ const Navbar = ({ setSearch, cart = [] }) => {
             </Link>
            <span>
   <a
-    href="https://shehrozportfoliohere.netlify.app/"
+    href="https://portfolioheres.netlify.app/"
     target="_blank"
     rel="noopener noreferrer"
   >
