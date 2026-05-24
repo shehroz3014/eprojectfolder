@@ -9,6 +9,9 @@ function Products({ search = "" }) {
   const [rating, setRating] = useState("");
   const [stockOnly, setStockOnly] = useState(false);
 
+  const [sortBy, setSortBy] = useState("");
+  const [minDiscount, setMinDiscount] = useState("");
+
   const [filterOpen, setFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -39,7 +42,7 @@ function Products({ search = "" }) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, category, priceRange, rating, stockOnly]);
+  }, [search, category, priceRange, rating, stockOnly, sortBy, minDiscount]);
 
   useEffect(() => {
     if (filterOpen) {
@@ -51,6 +54,7 @@ function Products({ search = "" }) {
     }
   }, [filterOpen]);
 
+  // 🔥 FILTER LOGIC
   const filtered = products.filter((p) => {
     const matchesSearch = p.title
       ?.toLowerCase()
@@ -73,18 +77,31 @@ function Products({ search = "" }) {
     const matchesRating = rating ? p.rating >= rating : true;
     const matchesStock = stockOnly ? p.stock > 0 : true;
 
+    const matchesDiscount = minDiscount
+      ? p.discountPercentage >= minDiscount
+      : true;
+
     return (
       matchesSearch &&
       matchesCategory &&
       matchesPrice &&
       matchesRating &&
-      matchesStock
+      matchesStock &&
+      matchesDiscount
     );
   });
 
-  const totalPages = Math.ceil(filtered.length / productsPerPage);
+  // 🔥 SORTING LOGIC
+  const sortedProducts = [...filtered].sort((a, b) => {
+    if (sortBy === "low-high") return a.price - b.price;
+    if (sortBy === "high-low") return b.price - a.price;
+    if (sortBy === "rating") return b.rating - a.rating;
+    return 0;
+  });
 
-  const currentProducts = filtered.slice(
+  const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
+
+  const currentProducts = sortedProducts.slice(
     (currentPage - 1) * productsPerPage,
     currentPage * productsPerPage
   );
@@ -102,7 +119,6 @@ function Products({ search = "" }) {
         </button>
       </div>
 
-      {/* FILTER OVERLAY */}
       {filterOpen && (
         <div
           className="filter-overlay"
@@ -122,6 +138,7 @@ function Products({ search = "" }) {
 
         <div className="filter-scroll">
 
+          {/* CATEGORY */}
           <div className="filter-box">
             <h3>Categories</h3>
             {["All Products", "Fragrance", "Beauty"].map((cat) => (
@@ -137,6 +154,7 @@ function Products({ search = "" }) {
             ))}
           </div>
 
+          {/* PRICE */}
           <div className="filter-box">
             <h3>Price</h3>
             {["Under 50$", "50$ - 100$", "100$ - 200$", "200$+"].map(
@@ -156,6 +174,7 @@ function Products({ search = "" }) {
             )}
           </div>
 
+          {/* RATING */}
           <div className="filter-box">
             <h3>Rating</h3>
             {[4, 3, 2, 1].map((r) => (
@@ -171,6 +190,7 @@ function Products({ search = "" }) {
             ))}
           </div>
 
+          {/* STOCK */}
           <div className="filter-box">
             <button
               className={`filter-circle-btn ${
@@ -182,18 +202,54 @@ function Products({ search = "" }) {
             </button>
           </div>
 
+          {/* 🔥 SORT BY */}
+          <div className="filter-box">
+            <h3>Sort By</h3>
+
+            {[
+              { label: "Price Low → High", value: "low-high" },
+              { label: "Price High → Low", value: "high-low" },
+              { label: "Rating", value: "rating" },
+            ].map((s) => (
+              <button
+                key={s.value}
+                className={`filter-circle-btn ${
+                  sortBy === s.value ? "active-btn" : ""
+                }`}
+                onClick={() => setSortBy(s.value)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 🔥 DISCOUNT */}
+          <div className="filter-box">
+            <h3>Discount</h3>
+
+            {[10, 20, 30].map((d) => (
+              <button
+                key={d}
+                className={`filter-circle-btn ${
+                  minDiscount === d ? "active-btn" : ""
+                }`}
+                onClick={() => setMinDiscount(d)}
+              >
+                {d}%+
+              </button>
+            ))}
+          </div>
+
         </div>
       </div>
 
       {/* MAIN CONTENT */}
       <div className="container">
 
-        {/* TITLE */}
         <h1 className="products-title fade-title">
           {titles[titleIndex]}
         </h1>
 
-        {/* PRODUCTS GRID */}
         <div className="grid">
           {currentProducts.map((p) => (
             <div className="card" key={p.id}>
@@ -214,7 +270,7 @@ function Products({ search = "" }) {
           ))}
         </div>
 
-        {/* ✅ PAGINATION (BOTTOM FIXED) */}
+        {/* PAGINATION */}
         <div className="pagination">
 
           <button
